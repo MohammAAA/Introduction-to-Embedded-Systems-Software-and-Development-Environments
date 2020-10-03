@@ -14,33 +14,33 @@
 ## Table of Contents
 * [Introduction to Embedded Systems(to be added later)](#--)
 * [Embedded Software Engineering(to be added later)](#--)
-* [Introduction to Software Configuration Management](#--)
-* [C Standardization and Team Coding Standards](#--)
-* [Development Environments Overview](#--)
-* [Development Kits and Documentation](#--)
-* [Version Control](#--)
+* [Introduction to Software Configuration Management](#introduction-to-software-configuration-management)
+* [C Standardization and Team Coding Standards](#c-standardization-and-team-coding-standards)
+* [Development Environments Overview](#development-environments-overview)
+* [Development Kits and Documentation](#development-kits-and-documentation)
+* [Version Control](#version-control)
 
 ## Introduction to Software Configuration Management
-- SW configuration management (SCM) is the process that handles how we configure and go about developing the code for the project. \
-- SCM simply describes how the software is developed and orgainzed 
-- This process contains a diverse set of goals and guidelines that dictate the software processes just as: \
-  - Version Control \
-  - Development Process \
-  - Environmental Information \
-  - Software Build and Release \
-  - Software Review \
-  - Testing \
-  - Support \
-  - Defect Tracking \
-  - Task Management \
+- SW configuration management (SCM) is the process that handles how we configure and go about developing the code for the project.
+- SCM simply describes how the software is developed and orgainzed
+- This process contains a diverse set of goals and guidelines that dictate the software processes just as: 
+  - Version Control
+  - Development Process
+  - Environmental Information
+  - Software Build and Release
+  - Software Review
+  - Testing
+  - Support
+  - Defect Tracking
+  - Task Management
 
 - These guidelines help coordinating the schedule and deliverables of the team.
 - Defining the practices of an SCM is dependent on the company or the team itself, as well as the platform needs. (a team may has some specific testing practices while other team implements all of their code in assembly)
 - Version control is a very powerful tool that allows are changes in a software code to be tracked indefinitely, `version control` is usally combined with `software review` as a way to prevent poorly designed software configurations into a project.
-- As we already know, the embedded system design and development is done using both host machine and target platform, the following image shows some of the important software tools used in the host machine \
+- As we already know, the embedded system design and development is done using both host machine and target platform, the following image shows some of the important software tools used in the host machine
 ![](Images/softwareTools.png)
 
-- After the executable file is generated from the toolchain, the code is installed on the target platform through the `programmer debugger` or `burner` \
+- After the executable file is generated from the toolchain, the code is installed on the target platform through the `programmer debugger` or `burner`
 ![](Images/ESDevelopmentPlatform.png)
 
 - We can simulate and test the code on the host environment before installing the code on the target, but it's also crucial to test the code on the embedded platform
