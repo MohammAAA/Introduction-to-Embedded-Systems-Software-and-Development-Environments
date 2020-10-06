@@ -101,8 +101,84 @@
 - As we have general flags for GCC whether it's native or cross compiler, we also have other architecture specific compiler flags for ARM cross compilers that are shown below:
 ![](Images/archFlags.png)
 
-- ** These architecture flags are important for informing the compiler and the linker about specific libraries to include as well as the target architecture and CPU to cross-compile for. **
-- For example: consider this command to generate the embedded architecture specific assembly file 'arm-none-eabi-gcc -std=c99 -mcpu=cortex-m0plus -mthumb -Wall -S main.c -o main.s` ... we can add the `-g` flag to add debug symbols for the assembly file.
+- **These architecture flags are important for informing the compiler and the linker about specific libraries to include as well as the target architecture and CPU to cross-compile for.**
+- For example: consider this command to generate the embedded architecture specific assembly file `arm-none-eabi-gcc -std=c99 -mcpu=cortex-m0plus -mthumb -Wall -S main.c -o main.s` ... we can add the `-g` flag to add debug symbols for the assembly file.
 - Also consider this to generate the main.out file: `arm-none-eabi-gcc main.c -o main.out --specs=nosys.specs -std=c99 -mcpu=cortex-m0plus -mthumb -Werror`
 - If we try to execute the latter main.out file on our host machine it will fail as it's compiled for another system.
-- 
+
+## Preprocessor Directives
+- The preprocessor doesn't do any translation or any generation of architecture specific code, instead it helps us providing specific control of compilation within files.
+- We can consider the preprocessor as a text replacement tool (or search and replace), so it provides us with macros that can help with code reuse and readability.
+- The preprocessor provides special keywords called preprocessor directives. Directives start with the `#` sign. 
+- Directives can be used to define `constants` as well as `macro functions` 
+- Some important directives to discuss are shown in the list below:
+  - `#define`, `#undef` 
+  - `#ifndef`, `#ifdef`, `#endif`
+  - `#include`
+  - `#warning`, `#error` --> for stopping or printing warning messages in compilation.
+  - `#pragma`--> this directive allows us to provide instructions to the compiler through the code itself rather than the command line.
+  
+- Command to stop the build process just after the preprocessing stage and generate a '.i' file: `gcc -E -o file.i file.c`
+- When we look at the file.i we will find that the declarations, definitions of '#define' and files that are to be included have been added to the top of the file.
+- `#define` use cases:
+  > - We don't want to place random constants all over the code, it's a lot better, more readable and maintainable, and easier to modify if we #define all constants at the top of the file. The **macro variables** are defined with the statement: `#define <MACRO-NAME> <MACRO-VALUE>` .. the <MACRO-VALUE> may be a constant, a string, or even a C statement.
+  ![](Images/constantExamples.png)
+  ![](Images/macroSubstitution.png)
+  
+  > - We may want to make **macro functions**, suppose we have a specific maths formula that we use regularly in our code, so we decide that it will be better to replace the function which is doing this operation over and over with overheads like the context switching and so on with a **macro function** .. we do so using the statement `#define <MACRO-FUNCTION>(<PARAMETERS>) (<C_OPERATIONS>)` .. consider the following example:
+   ![](Images/macroFunction.png)
+   ![](Images/macroFunctionsExample.png)
+  
+  
+  > - On the other side, if there is a bug in the macros, it will be harder to find and resolve as we usually don't examine the .i files. For example consider the following example:
+   ![](Images/macroIssues.png)
+  
+  > The code was meant to output y_square to 4, but due to this bug it has multiplied 2\*3 and the result became 6. This is because we forgot the fact that preprocessor directives only make text replacements, we provided an input to the function as a valid operation to the compiler but it's not the same perspective as the preprocesor which has made text replacement twice and led us to undefined behavior.
+  
+  > - We can define a macro without any value, we use this way as a true/false condition of whether a certain feature is represented or not. We do so by the statement `#define <FEATURE-NAME>`. This use case can be used with the `#ifdef` & `#ifndef` to perform **compile time switches**
+   ![](Images/defundef.png)
+   
+- Conditional directives use cases:
+  - The conditional directives may be:
+    - #ifdef
+    - #ifndef
+    - #if
+    - #elif
+    - #else
+    - #endif --> crucial to end every block of the conditional directives
+  - These directives can turn off large amounts of unneeded code, we can use them along side the `#define` & `#undef` to perform **compile time switches**, for example if we are writing a generic code for various microcontroller devices, then we can use these directives to include the header file of just the specific microcontroller device we need
+  - These directives are useful for debugging
+  - The if-else directives are just like the if-else in C programming, except that we don't provide the brackets `{....}`and instead we end the block with the `#endif`
+   ![](Images/ifelse.png)
+   ![](Images/ifelse2.png)
+   
+ - `#include` use cases:
+   ![](Images/include.png)
+   For example, in the following image the preprocessed file now contains the contents of both the .c & .h files:
+   ![](Images/include2.png)
+
+- `#pragma` use cases:
+  - It's used to provide specific instructions for the compiler from the code itself, not the command line.
+  - It's important when we want to provide a specific option for a specific piece of code that general compile options shouldn't do
+  - It's compiler specific, meaning that some compilers can respond to the #pragma and some others may not recognize the instruction so the compiler igonre it.
+  - In embedded systems, we avoid using some functions that are known to be costly resourced (like the printf), so we use the `poison` option to enforce the developer not to use these functions or an error will occur.
+   ![](Images/pragma.png)
+   ![](Images/pragma2.png)
+
+- We mentioned the term **compile time switch** before, let's discuss it in more details:
+  - The compile time switches are conditional blocks of code that can change which block is executed based on a runtime parameter (the #define <--->)
+  - We may add the macro name to be defined from the command line itself without modifying the code. We do so by adding the option `-D<MACRO-NAME>` and please note that the <MACRO-NAME> comes immediately after the -D ... this is equavalent to defining the macro in one of the source or header files
+  ![](Images/compileTimeSwitch.png)
+  
+  - As we mentioned before, the compile time switch allows us to use the same code for different embedded platforms, in the following image we have the same application installed on different hardware platforms with similar software except for the UART_Lib, thanks to the compile time switches we can easily provide a very portable top layer of software with a very flexible firmware layer so that we compile the same code for two different hardware targets.
+  ![](Images/CTS.png)
+   
+   
+- The pros of preprocessor directives:
+  - They make less overhead than the typical code
+  - Make great improvement for writing maintainable, readable, and platform independent programs.
+  
+- The cons of preprocessor directives:
+  - They don't perform type checking
+  - They may increase bugs
+  - They increase the code size
