@@ -161,7 +161,7 @@
   - It's used to provide specific instructions for the compiler from the code itself, not the command line.
   - It's important when we want to provide a specific option for a specific piece of code that general compile options shouldn't do
   - It's compiler specific, meaning that some compilers can respond to the #pragma and some others may not recognize the instruction so the compiler igonre it.
-  - In embedded systems, we avoid using some functions that are known to be costly resourced (like the printf), so we use the `poison` option to enforce the developer not to use these functions or an error will occur.
+  - In embedded systems, we avoid using some functions that are known to be costly resourceful (like the printf), so we use the `poison` option to enforce the developer not to use these functions or an error will occur.
    ![](Images/pragma.png)
    ![](Images/pragma2.png)
 
@@ -182,3 +182,130 @@
   - They don't perform type checking
   - They may increase bugs
   - They increase the code size
+
+## Creating Header and Implementation Files
+- Library: is a collection of sotware, either as a source code or a precompiled code format
+- A standard library is a pre-written code that is pre-compiled and provided by the toolchain, we don't have access to the source code itself although we can include it in our own projects.
+- The standard libraries provided in the compiler toolchain will likely be pretty optimized for the ISA we are using, meaning that they may not be optimized for our specific platform. Remember that we have very limited resources in embedded systems like memory and hardware blocks, that's why some organizations may at some point choose to rewrite some functions from these libraries in order not to include the whole standard library. 
+![](Images/includingStandardLibs.png)
+- We may design our own libraries to create reusable modules across different software projects
+- Module: is a SW organization so that each module encapsulates certain functionalities.
+- We want to design our projects in pieces or blocks to help split up the work and ease the validation process by writing software tests for each separate block or module (which is called *unit test*).
+- Each module contains 2 files:
+  1. The implementation or source file (.c) that contains functions definitions and other C codes. 
+  2. The header file (.h) which contains functions declarations, macros and the derived datatype definitions like the *enums* and *structures*
+- The .c file shouln't be directly accessible by SW projects, if we want certain data (e.g.: a certain variable) to be directly accessible we should declare them in the .h file. We can think of this as hiding the private implementation details of the C file, making the header file is the main access point and the documentation source of the module.
+- Each header file should begin with the *include guard* in order to prevent more than one include of the same file in the project. This is important as if the compiler sees certain symbols are redefined it will invoke a compilation error
+![](Images/includeGuard.png)
+![](Images/includeGuard1.png)
+![](Images/includeGuard2.png)
+![](Images/includeGuard3.png)
+
+- We can use an alternative include guard rather than the `#ifndef - #define` which is the `#pragma once` but as we mentioned before that the `#pragma` directives are non-standard and non-portable directives so it has its disadvantages.
+![](Images/includeGuard4.png)
+![](Images/includeGuard5.png)
+
+- Now, we discuss some naming conventions that help maintaining and reading the code much easier:
+  - When we define our own module (the .c and .h files), give each module a good name related to its functionality (e.g: keypad.c & keypad.h)
+  - Give the associating include guard preprocessor directive a similar name as the module name but in which all letters are capital (e.g.: #ifndef __KEYPAD_H__)
+  - Make the header file descriptive by providing a desription of the information it covers at the top of the file (like the module description, author information, copyrights, ...)
+  - Also, functions prototypes need informative comments on how to use each function (as in the following image)
+ ![](Images/documenting.png)
+ 
+- Back to the pre-compiled libraries, we have 2 types of these libraries:
+  - Static libraries: the libraries that are directly linked into the output executable at compile time (an example of this kind of pre-compiled libraries is the standard libraries that are provided with the toolchain)
+    - Static libraries can be created using the *archiever* GNU tool (ar)
+     ![](Images/staticLib.png)
+  - Shared libraries: libraries that are linked dynamically with the executable at runtime, meaning that the executable file is placed in separate memory regions than the shared libraries (i.e.: The shared libraries do exist in the platform memory already, and are not installed with the executable)
+    - The shared libraries are typically used by architectures running multiple programs using the same library like the advanced architectures that run an embedded operating system
+    - Some embedded manufacturers provide a specific section of memory dedicated to store precompiled libraries on the hardware
+    - If we install a shared library on our embedded system, then we should save it in a region of memory that will not be overwritten
+    - We can create shared libraries with the `shared` option from GCC
+     ![](Images/dynamicLib.png)
+- Designing libraries effectively is an important software architecture paradigm. We should take time to think through code design before trying to write any implementation. Things like how our codes will interface with each other, the purpose of the modules,and the purpose of the functions. So we have to ask ourselves some questions regarding the project design:
+  - Where do we actually create the architecture dependances? is it set in the code? or in the command line? .. the choice is up to the designer as there is no answer is better than the other.
+  - An example of the latter point: Imagine we have a build system that supports two boards with two different micro controllers, an MSP and KL25Z.
+  We have a main file that we want to be architecture independent. So, it includes an intermediate header file called platform.h.
+  This platform file helps us selecting between the two different architectures we support based on a compile time switch.
+  Each included file in the platform.h contains architecture dependent, low-level interface information for our intended target.
+  Given the switch, the correct architecture gets included. This method requires us to create the same function name interface for both the architecture specific files, so that higher levels are compatible with the initialized function.
+  There are other options to perform this architecture dependent compilation by putting compiled times switches directly in the codeinstead of intermediate files, or even using version control to help create different file trees.
+![](Images/moduleDesign.png)
+
+- The following image illustrates how we can perform compile time switches between different platforms
+![](Images/CTS00.png)
+![](Images/CTS01.png)
+
+
+## Linkers
+- The process of linking and locating are typically done in one stage and it's the last stage of the building process.
+- Remember that the linker's job is to take the compiled object files (which are not executable yet) and combine them to a single executable file, and the locator maps the object file contents into specifc address locations, producing an executable program that can be installed into the embedded microprocessor.
+- Normally, we have multiple files that go through the building process, some of them are the typical *.c and .h files*, some are *assembly files (.s)* and some are *library files (.a)*. The first and second types of those files go through their specific path to generate their corresponding *object file (.o)*, then all those object files as well as the .a files are fed to the linker to combine them together into a single object file which in turn is fed into the locator to map the file contents into the memory regions
+![](Images/typicalBuildProcess.png)
+
+- The **linker file** is the file responsible for telling the linker/locator how to map the executable file into the proper addresses. We pass the linker file through command line with the `-T` flag.
+
+- The linker can be invoked directly by the `ld` or indirectly from the `gcc -o` command
+- Linking process is not as simple as appending the contents of some object files into one file, as each object file contains different types of code, each type is stored in a specific memory region (e.g.: code memory and data memory) so each type is managed differently by the linker.
+- The code we design is likely written with many modules, defining many functions and variables, these functions and variables are likely used across many other files. For example, consider a module called "memory", this module has a defined function called "memzero", this function is called in the main.c file. The compiler and assembler don't know that this "memzero" function is declared and defined in the "memory" module so that the "memzero" in main.c is just a *symbol* in the compiler's perspective.
+![](Images/symbolsCompiler.png)
+
+- The symbols defined in one file and used in another file need to be mapped so that the location of the symbol's address is known and assigned properly to all uses of that symbol, the linker does this mapping but without assigning the proper addresses
+![](Images/afterLinking.png)
+
+- The locator is the tool responsible for assigning the proper addresses of the symbols
+![](Images/afterLocating.png)
+
+- Errors occur when we don't properly declare or include a symbol definition that is called somewhere in the project files, in this case the linker will search through all of the object files trying to find that symbol to map it as we discussed before and ofcourse it won't be found as this symbol isn't created, then it will try to search through the included library paths to find that symbol, if it is not found then the linker will throw an error and exit. (consider the example shown in the image below)
+![](Images/linkerError.png)
+
+- Pre-compiled static libraries will directly be linked to the executable at the linking process (we need to provide the `-l` or `-L`flag to include these libraries).
+![](Images/static&Linking.png)
+
+- However, dynamically linked symbols will contain paths to dynamic libraries that are already installed on the target. This causes issues if there was an incompatibility of the library that is installed on the target and the library headers we are including.
+![](Images/dynamic&Linking.png)
+
+- If we are writing code for an embedded OS platform, then there are likely libraries already installed on the target, so there is no reason to statically compile and upload them again and waste memory space.
+- It's worthy to know that standard libraries can be statically or dynamically linked.
+- You will likely use static and dynamic linking at one point in your career so it's good to know about them.
+
+- We should also wonder about the question of *What happens before `main` is called and how do we exit or return from the `main` function?" 
+  - The answer is that there is a startup routine that runs before the main function, the main is actually invoked in this **startup code**
+  - The startup code is usually defined in some C standard libraries and is automatically included in the build process (by the linker) as a static library. (when we directly invoke the linker instead of letting GCC do it's mission from the beginning, then the linker won't link the startup code, and the application won't find the entry for main and other startup instructions, throwing a compilation error). So if we invoke the linker directly, we will have to manually give it these libraries in order to finish the job properly.
+  - We can also tell GCC to stop making automatic include to the startup code, we do so if we want to write our own custom startup code (we can do this by providing the `-nostdlib` flag in command line)
+  - We can use the *verbose* flag `-v-` to see more details of the compilation and linking processes
+- After all linking is done and a final object file has been created with all symbols resolved, the output is called a *relocatable file* and is fed into the *locator* in order to assign the addresses as discussed at the beginning of this lesson.
+- The locator takes the relocatable file (which contains many sub-segments of code blocks which need to be mapped into the architecture's specific memory regions by assigning a specific address to each symbol (recall the following 2 images again:)
+![](Images/afterLinking.png)
+![](Images/afterLocating.png)
+
+- Each architecture is very different from others, so the locator needs a special file to provide instructions about how to assign architecture specific addresses to the generic object file. This special file is called *linker file* or *linker script*
+- Linker file provides the locator with information on where are the physical memory regions of the processor that will interface with the defined code regions. Linker file is architecture dependant
+- Linker file specifies details such as:
+  - segment name
+  - region name
+  - memory sizes
+    - We need to assign the exact start address of the data and code memory (origin), and also the memory length of each segment (length)
+  - access permission
+    - Each memory region specifies access permission such as read (R), write (W), and execute (X) for memory blocks
+  A brief example is shown in the following image (will discuss it in more details in Week 3)
+![](Images/linkerscriptDetails.png)
+![](Images/linkerscriptExample.png)
+![](Images/linkerscriptExample1.png)
+
+- It's obvious that the total size of memory segments provided in the linker file must be greater than or equal the total compiled code and data sections. To help prevent this, the linker script may contain small checks to verify that the memory regions are not overallocated. The following image shows a code example to verify that the heap and stack are not overflowing into one another in data memory, if they do then the linker throws an error and exits.
+![](Images/LinkerscriptTest.png)
+
+- The following example shows how the latter basic linker file will help the locator assign each item to its proper memory location.
+![](Images/memoryMap.png)
+![](Images/memoryMap1.png)
+![](Images/memoryMap2.png)
+
+- We will discuss memory section in more details in week 3.
+- If we want to see how exactly the memory allocation is done, we can provide the `-map` flag with the linker in order to produce a memory map file containing information about how all memory regions and segments are used and allocated, it also provides us with specific addresses for the allocations
+- The following image contains some important flags regarding the linking and locating process:
+![](Images/linkerFlags.png)
+![](Images/linkerFlags1.png)
+
+- After the linking and locating process is successfully done, an output executable will be generated and ready to get installed on the target, the format of this executable file varies depending on the installer and the architecture. Some of those formats are:
+![](Images/executableFileFormats.png)
