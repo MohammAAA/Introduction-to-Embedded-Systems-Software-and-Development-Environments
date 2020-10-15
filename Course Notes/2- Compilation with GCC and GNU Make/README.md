@@ -10,14 +10,14 @@
 > Generate preprocessor, assembly, object, dependency, executable, and map output files <br>
 
 ## Table of Contents
-* [Introduction to Build Systems Using GNU Toolsets](#--)
-* [Compiling and Invoking GCC](#--)
-* [Preprocessor Directives](#--)
-* [Creating Header and Implementation Files](#--)
-* [Linkers](#--)
-* [Make](#--)
-* [Makefiles](#--)
-* [Other Useful GNU Bin Tools](#--)
+* [Introduction to Build Systems Using GNU Toolsets](#introduction-to-build-systems-using-gnu-toolsets)
+* [Compiling and Invoking GCC](#compiling-and-invoking-gcc)
+* [Preprocessor Directives](#preprocessor-directives)
+* [Creating Header and Implementation Files](#creating-header-and-implementation-files)
+* [Linkers](#linkers)
+* [Make](#make)
+* [Makefiles](#makefiles)
+* [Other Useful GNU Bin Tools](#other-useful-gnu-bin-tools)
 
 ## Introduction to Build Systems Using GNU Toolsets
 - To transform the code written in high level language to the executable form which is written in architecture specific machine code, we use various tools so that each one do its specific job.
