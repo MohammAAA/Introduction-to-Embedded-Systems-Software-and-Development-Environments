@@ -15,7 +15,8 @@
 * [Preprocessor Directives](#--)
 * [Creating Header and Implementation Files](#--)
 * [Linkers](#--)
-* [Make and Makefiles](#--)
+* [Make](#--)
+* [Makefiles](#--)
 * [Other Useful GNU Bin Tools](#--)
 
 ## Introduction to Build Systems Using GNU Toolsets
