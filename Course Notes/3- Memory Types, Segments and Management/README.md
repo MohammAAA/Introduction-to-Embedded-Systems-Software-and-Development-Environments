@@ -89,11 +89,9 @@
 - It is the ability of memory to store data without power
 - We have 2 types of memory:
 |    | Volatile | Non-volatile |
-| -------------- | ------------------------------------------------------------- |----------------------------------------------------|
+| -------------- | :-------------------------------------------------------------: |----------------------------------------------------: |
 | Characteristic | it requires power to store data and loses data when power-off | it keeps the data stored when the power is removed |
-| -------------- | ------------------------------------------------------------- | -------------------------------------------------- |
 | Examples | RAM and most registers | ROM and flash |
-| -------------- | ------------------------------------------------------------- | -------------------------------------------------- |
 
 ### Write Endurance
 - Non-volatile memories have a limited number of write-erase cycles before failure, meaning that they can't be programmed for infinite number of times 
