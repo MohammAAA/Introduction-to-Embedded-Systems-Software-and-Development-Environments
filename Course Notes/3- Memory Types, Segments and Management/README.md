@@ -141,7 +141,7 @@
 - An example of register memory and the associated segments in the ARM Cortex m architecture is shown below:
   - The processor has specific rules about how general purpose and special purpose registers in the CPU are used
   - Nearly all operations in the CPU utilize the **general purpose registers** to hold operands or the inputs and outputs of an operation that is specified in the assembly code. In our examples we have R0-R12 general purpose registers
-  - The status and progress of the program operations are stored in the **special purpose registers**, these registers are accessed via special keywords in assembly. Special purpose register are the stack pointer and program counter
+  - The status and progress of the program operations are stored in the **special purpose registers**, these registers are accessed via special keywords in assembly. Special purpose register are the stack pointer, program counter, link register, ...
   ![](Images/CPURegisters.png)
 
 - To further complicate the usage of special purpose registers, different architectures like AVR may use keywords to interact with these registers
@@ -284,4 +284,167 @@
 - Some architectures like ARM will try to allocate a small number of local variables and funtion paramaters directly in the registers to reduce overhead associated with interacting with the stack.
 ![](Images/register.png)
 
-- 
+## The Stack
+- The *.data* and *.bss* subsegments have data that **get allocated at compile time and exist for the lifetime of the program** 
+- However, the stack subsegment **gets reserved at compile time but the data gets allocated at runtime**
+- The stack is a space where temporary data is stored and the memory is reused over and over as the program executes 
+- Stack requires some special management in order to accommodate the memory reuse, this is done either by the compiler at the time of build or directly by the programmer if they're writing the code in assembly
+- The data is allocated and de-allocated automatically based on the architecture.
+- Some general stack characteristics that are important to know:
+  - Architecture specific stack instructions and registers
+  - The direction of stack growth
+  - The contents that are put into the stack
+  - The order of the stack contents
+![](Images/stack.png)
+
+- The stack implementation is architecture dependent. Stack is primarily used for tracking the state of a program as routines are called and then returned (these routines include both program functions and interrupt service routines)
+- The lifetime of data allocated in the stack will relate to the current scope of a routine, therefore as functions get called and returned these memory spaces are reused for various routines.
+- All routines are application dependent, a programmer can nest routines with one another and the program has the ability to enter and return from each of these routines without affecting the calling routine's state.
+- The method of how to pass data in and out of a routine is referred to as a *calling convention*. Tha calling convention should specify architecture specific concepts on how the CPU and stack are used.
+- Calling conventions differ across architectures, for example: ARM architecture has different calling conventions from other RISC type processors
+- The stack is used to allocate, save, and restore information for a calling convention
+![](Images/callingConvention.png)
+
+- *local variables*, *input parameters*, and *return data* are stored on the stack, the amount of theses data is dependent on the implementation of the routine
+- In addition, other architecture specific items are stored in the stack just as a *copy of the used registers in the context*, *return address of the previous context*, *previous stack pointer*, and previous *special functions (interrupt routines) registers information*.
+- Interrupt routines can happen asynchronously at any point during the program, therefore the microcontroller must be able to save and return to a previous CPU state at any point in time.
+- When we these 2 groups of routine specific data and CPU state information, we obtain the *stack frame*.
+- When more and more subsegments are nested within one another, new frames are added to the stack.
+![](Images/stackFrame.png)
+
+- Each new frame has data that is dependent on the implementation of the function and the current state of the CPU. As function returns, the frame data is removed, CPU state is restored and the code moves back to the previous calling function and its stack frame.
+![](Images/stackFrames.png)
+
+- Stack is reserved to be a specific size, this means that we can *overflow* the allocated stack region by writing code with a lot of nested functions, a lot of function parameters, and a alot local variables that might all occupy larger space than the stack's.
+- Thus, we need to understand what an architecture's calling convention is in order to know how large a stack frame will be given for a function.
+![](Images/stackFrames1.png)
+
+- Back to the ARM register memory, for our KL25z architecture we have 16 CPU registers and the CPU uses them to not only execute instructions but also to coordinate the calling convention of a routine:
+  - Registers r0 to r3 are used to hold arguments that are passed into a function
+  - Registers r4 to r11 are used to hold local variables
+  - r13 holds the current stack pointer
+  - r14 holds the return address for a function to return to
+  - When a function is returned, the return data is put in the r0 register
+- The size of these registers is architecture dependent, for our ARM architecture these are 32 bits each
+- In addition to the previous registers, ARM has some other special purpose CPU registers that track and control the execution state, these include:
+  - Program status register (PSR)
+  - Exception mask registers (PRIMASK - FAULTMASK - BASEPRI)
+  - Control register
+![](Images/armRegisters.png)
+
+- After the previous discussion we might think that since the CPU general purpose registers are used to hold all of the input parameters, variables, and return data, so why do we even need the stack?
+  - The answer is that we only have 12 GP registers, so they won't fit many input parameters, many local variables, large data types. So when the 12 registers are full, then the remaining data is allocated in the stack (i.e.: these registers are used to boost and improve the performance of the process of calling convention -as we don't need to load and store from memory- and we can't completely rely on it) 
+![](Images/armRegisters1.png)
+
+- As a new data is put in the stack, the *stack pointer* will move in one direction growing the stack, when data is removed the stack pointer will move the other direction and the stack will shrink
+- The growing and shrinking of the stack occurs in the same end, with one end set firmly to a particular address.
+![Alt Text](https://tenor.com/view/stack-sats-litecoins-litecoin-stack-money-gif-15366631)
+
+- Stack is referred to as a LIFO data buffer, but it's specialized LIFO for the architecture's calling convention, also the stack implementation specifies the stack pointer will move upwards with address increaseing or downwards with adress descending to indicate stack grow. In our ARM architecture, stack is implemented as a *full descending stack* as the stack grows downwards to the lower addresses
+![](Images/stackGrowth.png)
+
+- To add and remove data to stack we use the special `push` and `pop` instructions. In some architectures, these are single instructions that push a single piece of information to or from the stack, in other architectures there may be a push or pop specialized instruction that can add or remove a particular set of registers to the stack.
+  - For example, ARM has `load` and `store` instructions that can move multiple pieces of data to and from the stack
+  ![](Images/stackOperations.png)
+
+- We should be careful to limit the number of routines that are called, in addition to control how many are nested, this is because the stack is not of infinite size and one of the major problems in embedded systems is the stack overflow 
+![](Images/stackoverflow.png)
+
+## The Heap
+- Heap is used to allocate dynamic data at runtime.
+- Just like the stack, heap is allocated and deallocated with software at runtime, the difference is that the heap allocation and deallocation is done manually by the programmer with the use of functions that manage the region.
+- The lifetime of the heap data will exist for as long as the software designer has not deallocated that data
+![](Images/heap.png)
+
+- Thanks to heap, we can -for each allocation- specify any number of bytes to reserve, we also can dynamically change the size of allocated data.
+![](Images/heap1.png)
+
+- Data that is reserved will remain reserved for as long as the programmer chooses. Allocated data can live for more than the function lifetime and shorter than the program lifetime.
+- The process or reserving dynamic memory and free-ing it is extra overhead for a program to execute. The dynamic memory management is done in the form of software routines that check for available space in the heap region to place the requested allocation. This dynamic memory manager maintains a data structure to track the current state of the heap space
+![](Images/heapScope.png)
+
+- We use specific heap functions to directly reserve and free data in the heap:
+![](Images/heapFunctions.png)
+
+- `malloc` and `calloc`reserve a contiguous block of memory by specifying the number of bytes you want to reserve, this can be placed anywhere in the heap depending on the current active allocation as long as it doesn't overflow the heap region
+- `calloc` does the same as `malloc` but `calloc` will additionally initialize this memory space with zeros.
+- Once we have received a pointer from `malloc` or `calloc`, we should maintain and not change that address as this address will be used to track and free these allocations later.
+![](Images/malloc.png)
+
+- `realloc` is the function that allows us to change existing allocation size, this function requires as inputs: the new size of memory that we wish to have, and the original heap pointer that we allocated from either malloc or calloc. `realloc` will return a pointer to the new memory region (this pointer may point to the same previous address or may be pointing to different address than the original pointer that we fed the function with .. this is based on whether the original address can handle the new space or not).
+- In case `realloc` allocates space in different location, then it will automatically free the previous location.
+![](Images/realloc.png)
+
+- All the previous heap functions require that we know exactly the memory size that we want to allocate and they return a pointer to the beginning of the allocated region, it becomes more challenging when we want to allocate some data structure as we will need some maths to calculate the exact size we want. However, the C operator `sizeof` can help with this as we give it a specific type or variable and it returns the number of bytes this variable will occupy in memory
+![](Images/sizeof.png)
+
+- The requested memory can be freed by the `free` function, all we need to do is to provide the pointer we are using to track that memory space as an input to the `free` function.
+- We must free the memory space as we are done with it, otherwise the heap will have less space to work with and may cause heap overflow.
+![](Images/free.png)
+
+- All of the previous functions require the programmer to keep track of the allocated memory with a pointer to the starting address, this pointer must have a scope as long as the memory is being used. if the pointer is destroyed from the stack before the allocated heap space is freed, then this memory space is lost for the remainder of the program
+- There is no guarantee that the space is successfully allocated as there may be not enough contiguous space remaining in the heap, We also can't know for sure by calculations as the heap region may be *fragmented*. If the allocation fails, these functions will return a NULL pointer, so we need to *assert* that the allocation process has been done successfully before proceeding with the program.
+![](Images/failedAllocation.png)
+
+- Here is an example where we successfully reserve 8 bytes of data in the heap:
+![](Images/failedAllocation1.png)
+
+- And this is an example where the reserve process fails because of fragmentation: assume a heap space of 64 bytes with 2 allocations existing already, the first one is 16 bytes and the second one is 32 bytes and we have 16 free bytes.
+- Now, we free the first 16 bytes so we now have 32 free bytes. But if we try to allocate new 32 bytes it will fail as the 32 already free bytes are not contiguous 
+![](Images/failedAllocation2.png)
+
+- Some embedded engineers advise not to frequently use dynamic memory allocation as it have some negatives regarding the memory and execution performance:
+  - Constantly allocating and freeing memory will add excessive execution overhead to managing the heap region.
+  - Heap can be fragmented, preventing us to use some available memory
+  - Failure to free a piece of memory is knows as *memory leak* which may be happened if we lose track of the heap memory by using its pointer
+![](Images/heapCons.png)
+
+
+## Code Memory
+- Just like the data segment, code segment is broken down into many subsegments that we will discuss in this lesson.
+- The code segment represents the part of the compiled memory that contains all of the executable program, the code segment also stores a little bit of program data
+- Code segment is put into the runtime read-only memories like *Flash*, this is done to protect the code from being accidentally overwritten and also for security reasons. Although it can be runtime writable even in flash but it requires extra interaction and permissions to write data depending on the implementation
+- As we discussed before, code memory has more limitations than data memory like *latency* and *durability* but has a strong benefit of being *non-volatile* memory.
+![](Images/codeMemory.png)
+
+- The code memory subsegments are:
+  - Interrupt vector table (.intvecs)
+  - Constant (.const) or read only data (.rodata)
+  - Initialization code (.cinit)
+  - Bootloaders
+  - Flash configuration
+- As just as the data segment, the linker file specifies what physical memory the code segments map to, the subsegments -as we already know- get mapped continously into this region starting at the address 0x0 
+![](Images/codeSubsegments.png)
+![](Images/codeSubsegments2.png)
+
+- The size of each subsegment is implementation dependent, either due to the architecture, compiler or the program itself
+- The interrupt vector table represents a function address table that maps to specific addresses that represent the start of the interrupt service routines.
+- So when the CPU needs to respond to an interrupt request, it will lookup this table and find where that function or ISR lives, then it jumps to that address
+- In general, the vector table is put at address 0x0 and it's pretty standard, but this can be configured in ARM architecture
+- The size of this subsegment is set based on the architecture as different architectures support different numbers of interrupts
+![](Images/vectorTable.png)
+![](Images/vectorTable1.png)
+
+- The *.text* section represents all of our actual code that is compiled and stored, this includes the *main* function and all of the SW routines we write, in addition to many functions that get added from the C standard library (just as the startup code that calls the main function and what to do after returning from it)
+- .text section size depends on how large our program is.
+![](Images/textSection.png)
+
+- The read-only data (.rodata) or the constant (.const) subsegment is where the *constant* variables are stored, we should not be able to modify the constant data, so we put them in this section so that if we try to overwrite this data, they fire a *processor exception* or the processor may neglect the operation (depending on the architecture). This is because the code memory requires extra interactions with the flash controller in order to write data into it
+![](Images/const.png)
+
+- The .pinit and .cinit subsegments are used at initialization, all of the initialzation data values are stored in non-volatile data memory until the program starts (this makes sense because if these data are stored in a volatile memory it will be lost once the power is removed) so they are stored in these subsegments and are loaded into SRAM everytime the application starts from power down
+- This initialization process causes more overhead on the processor, as the initialization of data requires both the code memory allocated for the initial values and also the initialization process itself.
+- Depending on the architecture and compiler, these sections may have different names or different implementations (these names are shown in the following picture)
+![](Images/init.png)
+![](Images/init1.png)
+
+- The last subsegment we will discuss is the *bootloader (.bootloader)* and flash config.
+- As discussed before, embedded systems need a method to install the executable on it, we can use *external program loaders* that connect directly to the processor but they are expensive and require extra hardware, some dev kits contain On-board processor to program the mcu through a cheaper much more standard interface like USB, these extra on-board processors are referred to as **external bootloader or flasher**.
+- A third solution is that we reserve a small segment of the code memory to act as our installer, **this is our bootloader** which is a small program that at each reboot it looks for a signal on one of its communication interfaces signalling a program install, if it sees this signal, it overwrites the current flash memory with the new program, if it doesn't see this signal then it will just call the currently stored program and boots begin program execution as usual.
+- The bootloader section helps reducing the amount of hardware required to install
+![](Images/bootloader.png)
+
+- We don't need to include all these segments and subsegments manually as the compiler will automatically use some C standard libraries during compilation to do this process.
+- Ofcourse we can avoid the addition of these subsegments and write our own bare-metal C by firing the *no standard library (-nostdlib)* compiler flag, or by writing our own assembly code directly
+- But since the compiler can provide us these operations so easily by defining what to do at startup and program termination, and how the segments and subsegments are mapped into memory, so it's not suggested to neglect all of these and write them from the beginning. The compiler can also automatically map unsupported operations for our architecture into equavalent software processes (which will be hard manually)
+- More advanced architectures with embedded OS support allow for code memory to be written and installed while the processor is running.
