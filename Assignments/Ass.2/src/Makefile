@@ -71,6 +71,7 @@ OBJS:= $(SOURCES:.c=.o)
 ASMS:= $(SOURCES:.c=.s)
 PPS:= $(SOURCES:.c=.i)
 MAPS:= $(SOURCES:.c=.map)
+OUTS:= $(SOURCES:.c=.out)
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------- #
 # Target: <file>.i
@@ -117,9 +118,10 @@ compile-all: $(SOURCES)
 # Output: the final executable file after linking and a brief report regarding the application size
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------- #
 .PHONY: build
-build: main.out
+build: $(OUTS)
+#main.out
 # I've a question here, if I set the prerequisites to main.o instead of main.out, the process doesn't get finished ... also how can make compiles the files and generate the object files when they are not provided by user as prerequesites. How can make understand that it should generate the .o files from the .c files before proceeding?
-main.out: $(OBJS)
+$(OUTS): $(SOURCES)
 	$(CC) $(DEFINEFLAG) $(CFLAGS) $(LDFLAGS) -o c1m2.out $^ 
 	size c1m2.out
 
