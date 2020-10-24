@@ -11,14 +11,14 @@
 > - Determine where compiled code and data symbols are allocated, the lifetime of these symbols and the access restrictions <br>
 
 ## Table of Contents
-* [Introduction to Memory Organization](#--)
-* [Memory Architectures](#--)
-* [Memory Segments](#--)
-* [Data Memory](#--)
-* [Special Keywords (Const, Extern, Static)](#--)
-* [The Stack](#--)
-* [The Heap](#--)
-* [Code Memory](#--)
+* [Introduction to Memory Organization](#introduction-to-memory-organization)
+* [Memory Architectures](#memory-architectures)
+* [Memory Segments](#memory-segments)
+* [Data Memory](#data-memory)
+* [Special Keywords (Const, Extern, Static)](#special-keywords-const-extern-static)
+* [The Stack](#the-stack)
+* [The Heap](#the-heap)
+* [Code Memory](#code-memory)
 
 ## Introduction to Memory Organization
 - Memory is a key component in embedded systems and generally in all computer systems, but in embedded systems, memory is also one of the major limited resources we have
