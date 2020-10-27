@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.tcc": "c",
+        "cmath": "c"
+    }
+}

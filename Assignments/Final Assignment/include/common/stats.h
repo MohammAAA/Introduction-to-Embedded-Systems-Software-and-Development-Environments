@@ -44,6 +44,7 @@ void print_statistics (unsigned char minimum, unsigned char maximum, float mean,
  * screen.
  * 
  * @param array The first element of the array to be printed on the screen
+ * @param counter The size of the array to be printed
  *
  * @return void
  */
@@ -57,7 +58,7 @@ void print_array (unsigned char *array, unsigned int counter);
  * its median.
  * 
  * @param array The first element of the array to be processed
- * @param 
+ * @param counter The size of the array to be printed
  *
  * @return median The median value of the given array.
  */
@@ -70,6 +71,7 @@ unsigned char find_median (unsigned char *array, unsigned int counter);
  * its mean.
  * 
  * @param array The first element of the array to be processed
+ * @param counter The size of the array to be printed
  *
  * @return mean The mean value of the given array.
  */
@@ -82,6 +84,7 @@ float find_mean (unsigned char *array, unsigned int counter);
  * its maximum.
  * 
  * @param array The first element of the array to be processed
+ * @param counter The size of the array to be printed
  *
  * @return maximum The maximum value of the given array.
  */
@@ -94,6 +97,7 @@ unsigned char find_maximum (unsigned char *array, unsigned int counter);
  * its minimum.
  * 
  * @param array The first element of the array to be processed
+ * @param counter The size of the array to be printed
  *
  * @return minimum The minimum value of the given array.
  */
@@ -107,6 +111,7 @@ unsigned char find_minimum (unsigned char *array, unsigned int counter);
  * sorted array.
  * 
  * @param array The first element of the array to be processed
+ * @param counter The size of the array to be printed
  *
  * @return median The median value of the given array.
  */

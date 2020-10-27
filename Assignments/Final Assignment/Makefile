@@ -30,12 +30,11 @@
 include sources.mk
 
 # Platform Overrides
-#PLATFORM =
-BASENAME = c1m2
+BASENAME = course1
  
 # Architectures Specific Flags
 ifeq ($(PLATFORM), MSP432)
-	LINKER_FILE = -T ../msp432p401r.lds 
+	LINKER_FILE = -T msp432p401r.lds 
 	CPU = cortex-m4
 	ARCH = armv7e-m
 	SPECS = nosys.specs
@@ -50,7 +49,7 @@ ifeq ($(PLATFORM), MSP432)
 	LD = arm-none-eabi-ld
 	LDFLAGS = -Wl,-Map=$(BASENAME).map $(LINKER_FILE) 
 	### -Wl,option: Pass option as an option to the linker. If option contains commas, it is split into multiple options at the commas. You can use this syntax to pass an argument to the option. For 		example, -Wl,-Map,output.map passes -Map output.map to the linker. When using the GNU linker, you can also get the same effect with -Wl,-Map=output.map.
-	CFLAGS = -mcpu=$(CPU) -march=$(ARCH) --specs=$(SPECS) -mfloat-abi=hard -mfpu=fpv4-sp-d16 -mthumb -Wall -Werror -O0 -g -std=c99
+	CFLAGS = -mcpu=$(CPU) -march=$(ARCH) --specs=$(SPECS) -mfloat-abi=hard -mfpu=fpv4-sp-d16 -mthumb -Wall -O0 -g -std=c99
 	### Some flags as described from GCC documentation:
 	### -Wall: This enables all the warnings about constructions that some users consider questionable, and that are easy to avoid (or modify to prevent the warning), even in conjunction with macros.
 	### -Werror: Make all warnings into errors. 
@@ -59,11 +58,18 @@ ifeq ($(PLATFORM), MSP432)
 	DEFINEFLAG = -DMSP432
 else
 	CC = gcc
-	#LD = 
 	LDFLAGS = -Wl,-Map=$(BASENAME).map
-	CFLAGS = -Wall -Werror -O0 -g -std=c99
+	CFLAGS = -Wall -O0 -g -std=c99
 	CPPFLAGs = -M -MF test2.d
 	DEFINEFLAG = -DHOST
+endif
+
+ifeq ($(VERBOSE), TRUE)
+	CFLAGS += -DVERBOSE
+endif
+
+ifeq ($(COURSE1), TRUE)
+	CFLAGS += -DCOURSE1
 endif
 
 # More Declared Variables
@@ -110,7 +116,7 @@ OUTS:= $(SOURCES:.c=.out)
 .PHONY: compile-all
 compile-all: $(SOURCES)
 #$(OBJS): $(SOURCES)
-	$(CC) $(DEFINEFLAG) $(CFLAGS) -c $(SOURCES)
+	$(CC) $(DEFINEFLAG) $(CFLAGS) -c $(SOURCES) -lm
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------- #
 # Target: build
@@ -122,8 +128,8 @@ build: $(OUTS)
 #main.out
 # I've a question here, if I set the prerequisites to main.o instead of main.out, the process doesn't get finished ... also how can make compiles the files and generate the object files when they are not provided by user as prerequesites. How can make understand that it should generate the .o files from the .c files before proceeding?
 $(OUTS): $(SOURCES)
-	$(CC) $(DEFINEFLAG) $(CFLAGS) $(LDFLAGS) -o c1m2.out $^ 
-	size c1m2.out
+	$(CC) $(DEFINEFLAG) $(CFLAGS) $(LDFLAGS) -o course1.out $^ -lm
+	size -Atd course1.out
 
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------- #
 # Target: clean
