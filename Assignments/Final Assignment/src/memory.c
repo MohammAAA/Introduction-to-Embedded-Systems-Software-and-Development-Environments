@@ -50,44 +50,18 @@ void clear_all(char * ptr, unsigned int size){
 }
 
 uint8 * my_memmove(uint8 * src, uint8 * dst, uint8 length){
-    //if ( (((&src[0+length])) > (&dst[0])) || (((&dst) + length) >= (&src)) ){
-        // no overlap
-        /*for (int dataCount=0; dataCount<length; dataCount++){
-            *(dst+dataCount) = *(src+dataCount);
-            //*(src+dataCount) = 0;
-        }*/
+	
 	int16 datatoMove[length];
-	// First copy to buffer
+	// Copy to buffer
 	my_memcopy(src, datatoMove, length);
-
-	// Second copy to destination
+	
+	// Copy from buffer to destination
 	my_memcopy(datatoMove, dst, length);
-    //}
-    /*else {
-        // overlap exists, save the source original data before it's corrupted
-
-        int16 datatoMove[length];
-        for (int dataCount=0; dataCount<length; dataCount++){
-            //save the source data
-            *(datatoMove+dataCount) = *(src+dataCount);
-        }
-        for (int dataCount=0; dataCount<length; dataCount++){
-            if ( ((&src[0] + dataCount) >= (&dst[0])) ){ // || ((&dst + dataCount) >= &src)
-                // no overlap occurred yet
-                *(dst+dataCount) = *(datatoMove+dataCount);
-                *(src+dataCount) = 0;
-            }
-            else {
-                // overlap occurred, can't clear the source memory anymore
-                *(dst+dataCount) = *(datatoMove+dataCount);
-            }
-        }
-    }*/
+   
     return dst;
 }
 
 uint8 * my_memcopy(uint8 * src, uint8 * dst, uint8 length){
-    // the requirements say that data should be corrupted when overlapping 
     for (int dataCount=0; dataCount<length; dataCount++){
         *(dst+dataCount) = *(src+dataCount);
     }    
